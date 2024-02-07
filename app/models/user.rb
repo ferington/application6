@@ -7,12 +7,12 @@ class User < ApplicationRecord
   has_many :books
   has_many :book_comments, dependent: :destroy
   has_many :favorites, dependent: :destroy
-  has_one_attached :profile_image
   has_many :active_relationships, class_name: "Relationship", foreign_key: "follower_id", dependent: :destroy
   has_many :passive_relationships, class_name: "Relationship", foreign_key: "followed_id", dependent: :destroy
   has_many :followings, through: :active_relationships, source: :followed
   has_many :followers, through: :passive_relationships, source: :follower
-
+  has_one_attached :profile_image
+  
   validates :name, length: { minimum: 2, maximum: 20 }, uniqueness: true
   validates :introduction, length: { maximum: 50 }
   
@@ -22,7 +22,7 @@ class User < ApplicationRecord
   end
 
   def follow(user)
-    active_relationships.create(followed_id: user_id)
+    active_relationships.create(followed_id: user.id)
   end
   
   def unfollow(user)
@@ -31,5 +31,17 @@ class User < ApplicationRecord
   
   def following?(user)
     followings.include?(user)
+  end
+  
+  def self.search_for(content, method)
+    if method == 'perfect'
+      User.where(name: content)
+    elsif method == 'forward'
+     User.where('name LIKE ?', content + '%')
+    elsif method == 'backward'
+      User.where('name LIKE ?', '%' + content)
+    else
+      User.where('name LIKE ?', '%' + content + '%')
+    end      
   end
 end
